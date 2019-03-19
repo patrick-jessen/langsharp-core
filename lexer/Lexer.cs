@@ -13,6 +13,7 @@ namespace lexer
 
         private Location tokenStart;// The start location of the token currently being evaluated
         protected string tokenValue;// Value of the token currently being evaluated
+        protected bool skipToken;   // Whether to skip the current token
 
         public Lexer(string fileName)
         {
@@ -28,27 +29,19 @@ namespace lexer
                 // Reset token
                 tokenStart = GetLocation();
                 tokenValue = "";
+                skipToken = false;
 
                 if (EOF) return MakeToken(Token.Type.EOF);
 
                 var first = Consume();
-                if (Char.IsWhiteSpace(first))
-                {
-                    // Keep track of line numbers
-                    if (first == '\n')
-                    {
-                        lineNo++;
-                        lineStartIndex = index;
-                    }
-                    // Ignore white space
-                    continue;
-                }
+                
 
                 // Lex a single token
                 var type = LexOne(first);
                 if(type != null) return MakeToken(type);
 
-                throw new Exception(tokenStart, $"unexpected token '{tokenValue}'");
+                if(!skipToken)
+                    throw new Exception(tokenStart, $"unexpected token '{tokenValue}'");
             }
         }
 
@@ -60,6 +53,12 @@ namespace lexer
         protected char Consume()
         {
             var c = Peek();
+            if (c == '\n')
+            {
+                lineNo++;
+                lineStartIndex = index+1;
+            }
+
             tokenValue += c;
             index++;
             return c;

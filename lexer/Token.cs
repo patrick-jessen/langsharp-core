@@ -19,6 +19,11 @@ namespace lexer
             this.value = value;
         }
 
+        public bool Is(Enum type)
+        {
+            return this.type.Equals(type);
+        }
+
         public override string ToString()
         {
             var typeStr = Enum.GetName(type.GetType(), type);
