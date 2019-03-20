@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Language.C;
 
 namespace langsharp_core
 {
@@ -7,18 +8,7 @@ namespace langsharp_core
     {
         static void Main(string[] args)
         {
-            var p = new CParser("./prog/prog.c");
-
-            try 
-            {
-                var ast = p.Parse();
-                var json = JsonConvert.SerializeObject(ast, Formatting.Indented);
-                Console.WriteLine(json);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            CCompiler.Compile("./prog/prog.c");
         }
     }
 }
