@@ -1,86 +1,88 @@
 using System;
 using System.Collections.Generic;
-using parser;
+using Compiler;
+using Compiler.Lexing;
+using Compiler.Parsing;
 
 namespace langsharp_core 
 {
-    public enum Token
+    public enum TokenType
     { 
         Keyword, Identifier, ParentStart, ParentEnd, 
         BraceStart, BraceEnd, Hash, String, Semicolon, 
         Integer, Float, Comma, EOF 
     };
 
-    public class CLexer : lexer.Lexer
+    public class CLexer : Lexer
     {
         public CLexer(string fileName) : base(fileName) {}
 
-        protected override Enum LexOne(char first)
+        protected override Enum LexOne()
         {
             // Ignore whitespace
-            if (Char.IsWhiteSpace(first))
+            if (Char.IsWhiteSpace(currChar))
             {
-                while(!EOF && Char.IsWhiteSpace(Peek())) Consume();
+                while(!EOF && Char.IsWhiteSpace(nextChar)) Consume();
 
                 // Ignore white space
                 skipToken = true;
                 return null;
             }
             // Lex keywords and identifiers
-            if (Char.IsLetter(first))
+            if (Char.IsLetter(currChar))
             {
-                while (Char.IsLetter(Peek())) Consume();
-                if (IsKeyword()) return Token.Keyword;
-                return Token.Identifier;
+                while (Char.IsLetter(nextChar)) Consume();
+                if (IsKeyword()) return TokenType.Keyword;
+                return TokenType.Identifier;
             }
             // Lex integers and floats
-            if(Char.IsDigit(first)) 
+            if(Char.IsDigit(currChar)) 
             {
-                while(Char.IsDigit(Peek())) Consume();
-                if(Peek() == '.') {
+                while(Char.IsDigit(nextChar)) Consume();
+                if(nextChar == '.') {
                     Consume();
-                    while(Char.IsDigit(Peek())) Consume();
-                    return Token.Float;
+                    while(Char.IsDigit(nextChar)) Consume();
+                    return TokenType.Float;
                 }
-                return Token.Integer;
+                return TokenType.Integer;
             }
             // Lex strings
-            if(first == '"') 
+            if(currChar == '"') 
             {
-                while(!EOF && Peek() != '"') Consume();
+                while(!EOF && nextChar != '"') Consume();
                 Consume();
                 tokenValue = tokenValue.Substring(1, tokenValue.Length-2);
-                return Token.String;
+                return TokenType.String;
             }
             // Lex comments
-            if(first == '/')
+            if(currChar == '/')
             {
                 var second = Consume();
                 if(second == '/')
                 {
-                    while(!EOF && Peek() != '\n') Consume();
+                    while(!EOF && nextChar != '\n') Consume();
                     skipToken = true;
                     return null;
                 }
                 if(second == '*')
                 {
                     var v = Consume();
-                    while(!EOF && (v != '*' || Peek() != '/')) v = Consume();
+                    while(!EOF && (v != '*' || nextChar != '/')) v = Consume();
                     Consume();
                     skipToken = true;
                     return null;
                 }
             }
             // Lex symbols
-            switch(first)
+            switch(currChar)
             {
-                case '{': return Token.BraceStart;
-                case '}': return Token.BraceEnd;
-                case '(': return Token.ParentStart;
-                case ')': return Token.ParentEnd;
-                case '#': return Token.Hash;
-                case ';': return Token.Semicolon;     
-                case ',': return Token.Comma;              
+                case '{': return TokenType.BraceStart;
+                case '}': return TokenType.BraceEnd;
+                case '(': return TokenType.ParentStart;
+                case ')': return TokenType.ParentEnd;
+                case '#': return TokenType.Hash;
+                case ';': return TokenType.Semicolon;     
+                case ',': return TokenType.Comma;              
             }
             
             return null;
@@ -98,7 +100,7 @@ namespace langsharp_core
         }
     }
 
-    public class CParser : parser.Parser 
+    public class CParser : Parser 
     {
         public CParser(string fileName) : base(new CLexer(fileName)) {}
 
@@ -106,12 +108,12 @@ namespace langsharp_core
         {
             var ast = new ASTFile();
 
-            while(nextToken.Is(Token.Hash))
+            while(nextToken.Is(TokenType.Hash))
                 ast.includes.Add(ParseInclude());
 
             switch(nextToken.type) 
             {
-                case Token.Keyword:
+                case TokenType.Keyword:
                     ast.declarations.Add(ParseFunction());
                     break;
             }
@@ -121,20 +123,20 @@ namespace langsharp_core
 
         private ASTInclude ParseInclude() 
         {
-            Consume(Token.Hash);
-            Consume(Token.Keyword, "include");
-            var fileTok = Consume(Token.String);
+            Consume(TokenType.Hash);
+            Consume(TokenType.Keyword, "include");
+            var fileTok = Consume(TokenType.String);
             return new ASTInclude() { file = fileTok };
         }
 
         private ASTFunction ParseFunction() 
         {
 
-            var retTok = Consume(Token.Keyword);
-            var nameTok = Consume(Token.Identifier);
-            Consume(Token.ParentStart);
-            Consume(Token.ParentEnd);
-            Consume(Token.BraceStart);
+            var retTok = Consume(TokenType.Keyword);
+            var nameTok = Consume(TokenType.Identifier);
+            Consume(TokenType.ParentStart);
+            Consume(TokenType.ParentEnd);
+            Consume(TokenType.BraceStart);
 
             var ast = new ASTFunction() 
             {
@@ -142,19 +144,19 @@ namespace langsharp_core
                 returns = retTok
             };
 
-            while(!nextToken.Is(Token.BraceEnd))
+            while(!nextToken.Is(TokenType.BraceEnd))
             {
                 ast.statements.Add(ParseStatement());
-                Consume(Token.Semicolon);
+                Consume(TokenType.Semicolon);
             }
-            Consume(Token.BraceEnd);
+            Consume(TokenType.BraceEnd);
 
             return ast;
         }
 
         ASTStatement ParseStatement() 
         {
-            if(nextToken.Is(Token.Keyword))
+            if(nextToken.Is(TokenType.Keyword))
             {
                 var keywordTok = Consume();
                 if(keywordTok.value == "return")
@@ -165,10 +167,10 @@ namespace langsharp_core
                     };
                 }
             }
-            else if(nextToken.Is(Token.Identifier))
+            else if(nextToken.Is(TokenType.Identifier))
             {
                 var identTok = Consume();
-                if(nextToken.Is(Token.ParentStart))
+                if(nextToken.Is(TokenType.ParentStart))
                 {
                     var ast = new ASTFunctionCall()
                     {
@@ -176,10 +178,10 @@ namespace langsharp_core
                     };
 
                     Consume();
-                    while(!nextToken.Is(Token.ParentEnd)) 
+                    while(!nextToken.Is(TokenType.ParentEnd)) 
                     {
                         ast.arguments.Add(ParseExpression());
-                        if(nextToken.Is(Token.Comma))
+                        if(nextToken.Is(TokenType.Comma))
                             Consume();
                     }
 
@@ -187,17 +189,17 @@ namespace langsharp_core
                     return ast;
                 }
             }
-            throw new parser.Exception(nextToken.start, "expected statement");
+            throw new CompilerException(nextToken.start, "expected statement");
         }
 
         ASTExpression ParseExpression()
         {
             Consume();
-            if(currToken.Is(Token.Integer))
+            if(currToken.Is(TokenType.Integer))
                 return new ASTInteger() { value = currToken };
-            if(currToken.Is(Token.String))
+            if(currToken.Is(TokenType.String))
                 return new ASTString() { value = currToken };
-            throw new parser.Exception(currToken.start, "expected expression");
+            throw new CompilerException(currToken.start, "expected expression");
         }
 
         class ASTFile : ASTNode
@@ -207,13 +209,13 @@ namespace langsharp_core
         }
         class ASTInclude : ASTNode 
         { 
-            public lexer.Token file; 
+            public Token file; 
         }
         interface ASTDeclaration : ASTNode {}
         class ASTFunction : ASTDeclaration
         {
-            public lexer.Token name;
-            public lexer.Token returns;
+            public Token name;
+            public Token returns;
             public List<ASTStatement> statements = new List<ASTStatement>();
         }
     
@@ -224,18 +226,18 @@ namespace langsharp_core
         }
         class ASTFunctionCall : ASTStatement
         {
-            public lexer.Token identifier;
+            public Token identifier;
             public List<ASTExpression> arguments = new List<ASTExpression>();
         }
 
         interface ASTExpression : ASTNode {}
         class ASTInteger : ASTExpression
         {
-            public lexer.Token value;
+            public Token value;
         }
         class ASTString : ASTExpression
         {
-            public lexer.Token value;
+            public Token value;
         }
     }
 }

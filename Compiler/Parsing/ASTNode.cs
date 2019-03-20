@@ -2,8 +2,9 @@ using System;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Compiler.Lexing;
 
-namespace parser 
+namespace Compiler.Parsing
 {
     [JsonConverter(typeof(ASTSerializer))]
     public interface ASTNode { }
@@ -35,7 +36,7 @@ namespace parser
                 {
                     writer.WritePropertyName(field.Name);
 
-                    if(propValue is lexer.Token)
+                    if(propValue is Token)
                         writer.WriteValue(propValue.ToString());
                     else
                         serializer.Serialize(writer, propValue);

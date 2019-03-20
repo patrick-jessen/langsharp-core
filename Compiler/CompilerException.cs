@@ -1,17 +1,17 @@
 using System;
-using lexer;
+using Compiler.Lexing;
 
-namespace parser 
+namespace Compiler 
 {
-    class Exception : System.Exception
+    public class CompilerException : System.Exception
     {
         public Location location;
 
-        public Exception(Location location, string msg) : base(msg)
+        public CompilerException(Location location, string msg) : base(msg)
         {
             this.location = location;
         }
-
+        
         public override string Message => String.Format("[ERROR] {0} at {1}", base.Message, location);
     }
 }

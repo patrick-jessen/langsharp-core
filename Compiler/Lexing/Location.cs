@@ -1,6 +1,6 @@
 using System;
 
-namespace lexer
+namespace Compiler.Lexing
 {
     public class Location
     {

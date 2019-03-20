@@ -1,6 +1,6 @@
 using System;
 
-namespace lexer 
+namespace Compiler.Lexing
 {
     public class Token
     {
@@ -19,9 +19,11 @@ namespace lexer
             this.value = value;
         }
 
-        public bool Is(Enum type)
+        public bool Is(Enum type = null, String value = null)
         {
-            return this.type.Equals(type);
+            if(type != null && !this.type.Equals(type)) return false;
+            if(value != null && this.value != value) return false;
+            return true;
         }
 
         public override string ToString()
