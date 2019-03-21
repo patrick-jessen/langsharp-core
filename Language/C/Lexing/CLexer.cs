@@ -85,6 +85,7 @@ namespace Language.C.Lexing
               case "include": return true;
               case "int":     return true;
               case "return":  return true;
+              case "extern":  return true;
             }
             return false;
         }

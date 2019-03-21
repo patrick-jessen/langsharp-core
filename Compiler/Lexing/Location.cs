@@ -15,6 +15,13 @@ namespace Compiler.Lexing
             this.columnNo = columnNo;
         }
 
+        public bool After(Location other)
+        {
+            if(lineNo > other.lineNo) return true;
+            if(lineNo == other.lineNo && columnNo >= other.columnNo) return true;
+            return false;
+        }
+
         public override string ToString()
         {
             return String.Format("{0}:{1}:{2}", file, lineNo, columnNo);

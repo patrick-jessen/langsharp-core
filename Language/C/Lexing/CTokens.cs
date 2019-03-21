@@ -4,6 +4,6 @@ namespace Language.C.Lexing
     { 
         Keyword, Identifier, ParentStart, ParentEnd, 
         BraceStart, BraceEnd, Hash, String, Semicolon, 
-        Integer, Float, Comma, EOF 
+        Integer, Float, Comma,  
     };
 }

@@ -1,6 +1,10 @@
 #include "stdio.h"
 
+extern int answerToLife();
+
 int main() {
-  printf("The answer to the Ultimate Question of Life, the Universe, and Everything is %i", 42);
-  return 0;
+  print
+  return
+  //printf("The answer to the Ultimate Question of Life, the Universe, and Everything is %i", answerToLife());
+  //return 0;
 }

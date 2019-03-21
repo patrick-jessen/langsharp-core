@@ -13,6 +13,10 @@ namespace Language.C.Parsing
     { 
         public Token file; 
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Declarations
+    ////////////////////////////////////////////////////////////////////////////
     interface ASTDeclaration : ASTNode {}
     class ASTFunction : ASTDeclaration
     {
@@ -20,18 +24,28 @@ namespace Language.C.Parsing
         public Token returns;
         public List<ASTStatement> statements = new List<ASTStatement>();
     }
+    class ASTExtern : ASTDeclaration
+    {
+        public ASTDeclaration declaration;
+    }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Statements
+    ////////////////////////////////////////////////////////////////////////////
     interface ASTStatement : ASTNode {}
     class ASTReturn : ASTStatement
     {
         public ASTExpression value;
     }
-    class ASTFunctionCall : ASTStatement
+    class ASTFunctionCall : ASTStatement, ASTExpression
     {
         public Token identifier;
         public List<ASTExpression> arguments = new List<ASTExpression>();
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Expressions
+    ////////////////////////////////////////////////////////////////////////////
     interface ASTExpression : ASTNode {}
     class ASTInteger : ASTExpression
     {

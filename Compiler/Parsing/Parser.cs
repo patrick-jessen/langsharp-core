@@ -32,12 +32,18 @@ namespace Compiler.Parsing
         {
             // Assert type and value
             if(!nextToken.Is(type, value))
-                throw new CompilerException(currToken.end, String.Format("expected '{0}'", value==null?(object)type:value));
+                throw new CompilerError(currToken.end, String.Format("expected '{0}'", value==null?(object)type:value));
 
             // Advance tokens
             currToken = nextToken;
             nextToken = lexer.Lex();
             return currToken;
+        }
+
+        protected CompilerError BestError(CompilerError inner, CompilerError outer) 
+        {
+            if(outer.location.After(inner.location)) return outer;
+            return inner;
         }
     }
 }

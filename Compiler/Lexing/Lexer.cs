@@ -52,7 +52,7 @@ namespace Compiler.Lexing
                 if(type != null) return MakeToken(type);
 
                 if(!skipToken)
-                    throw new CompilerException(tokenStart, $"unexpected token '{tokenValue}'");
+                    PrintError();
             }
         }
 
@@ -89,6 +89,12 @@ namespace Compiler.Lexing
             var end = GetLocation();
             end.columnNo += 1;
             return new Token(tokenStart, end, type, tokenValue);
+        }
+    
+        private void PrintError() 
+        {
+            var error = new CompilerError(tokenStart, $"unexpected token {tokenValue}");
+            Console.WriteLine(error.Message);
         }
     }
 }
