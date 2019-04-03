@@ -1,4 +1,5 @@
 using System;
+using Compiler.Source;
 
 namespace Compiler.Lexing
 {
@@ -8,10 +9,10 @@ namespace Compiler.Lexing
 
         public Enum type;       // Type of token
         public String value;    // Literal value of token
-        public Location start;  // Location just before the token
-        public Location end;    // Location just after the token
+        public SourcePos start; // Position just before the token
+        public SourcePos end;   // Position just after the token
 
-        public Token(Location start, Location end, Enum type, String value)
+        public Token(SourcePos start, SourcePos end, Enum type, String value)
         {
             this.start = start;
             this.end = end;

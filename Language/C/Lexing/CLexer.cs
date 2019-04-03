@@ -1,11 +1,12 @@
 using System;
 using Compiler.Lexing;
+using Compiler.Source;
 
 namespace Language.C.Lexing
 {
     public class CLexer : Lexer
     {
-        public CLexer(string fileName) : base(fileName) {}
+        public CLexer(SourceFile file) : base(file) {}
 
         protected override Enum LexOne()
         {
@@ -40,7 +41,7 @@ namespace Language.C.Lexing
             if(currChar == '"') 
             {
                 while(!EOF && nextChar != '"') Consume();
-                Consume();
+                Consume('"');
                 tokenValue = tokenValue.Substring(1, tokenValue.Length-2);
                 return TokenType.String;
             }

@@ -2,13 +2,14 @@ using System;
 using Compiler;
 using Compiler.Lexing;
 using Compiler.Parsing;
+using Compiler.Source;
 using Language.C.Lexing;
 
 namespace Language.C.Parsing
 {
     public class CParser : Parser 
     {
-        public CParser(string fileName) : base(new CLexer(fileName)) {}
+        public CParser(SourceFile file) : base(file, new CLexer(file)) {}
 
         protected override ASTNode ParseOne()
         {
@@ -25,10 +26,18 @@ namespace Language.C.Parsing
 
         private ASTInclude ParseInclude() 
         {
-            Consume(TokenType.Hash);
-            Consume(TokenType.Keyword, "include");
-            var fileTok = Consume(TokenType.String);
-            return new ASTInclude() { file = fileTok };
+            try 
+            {
+                Consume(TokenType.Hash);
+                Consume(TokenType.Keyword, "include");
+                var fileTok = Consume(TokenType.String);
+                return new ASTInclude() { file = fileTok };
+            }
+            catch 
+            {
+                ReportError(currToken.end, "expected include statement");
+                return null;
+            }
         }
 
         private ASTDeclaration ParseDeclaration()
@@ -38,7 +47,8 @@ namespace Language.C.Parsing
             if(nextToken.Is(TokenType.Keyword))
                 return ParseFunction();
 
-            throw new CompilerError(nextToken.start, "expected declaration");
+            ConsumeAndReportError(nextToken.start, "expected declaration");
+            return null;
         }
 
         private ASTExtern ParseExtern() 
@@ -79,8 +89,9 @@ namespace Language.C.Parsing
                 }
                 Consume(TokenType.BraceEnd);
             }
-            catch(CompilerError e) {
-                throw BestError(e, new CompilerError(bodyLoc, "expected function body"));
+            catch {
+                ReportError(currToken.end, "expected function body");
+                return null;
             }
 
             return ast;
@@ -88,31 +99,31 @@ namespace Language.C.Parsing
 
         ASTStatement ParseStatement() 
         {
-            var stmtLoc = currToken.end;
+            var stmtLoc = nextToken.start;
 
             while(!nextToken.Is(Token.Type.EOF)) {
-            try {
-                if(nextToken.Is(TokenType.Keyword, "return"))
-                {
-                    Consume();
-                    return new ASTReturn()
+                try {
+                    if(nextToken.Is(TokenType.Keyword, "return"))
                     {
-                        value = ParseExpression()
-                    };
+                        Consume();
+                        return new ASTReturn()
+                        {
+                            value = ParseExpression()
+                        };
+                    }
+                    else if(nextToken.Is(TokenType.Identifier))
+                        return ParseFunctionCall();
+                    else
+                        Consume();
                 }
-                else if(nextToken.Is(TokenType.Identifier))
-                    return ParseFunctionCall();
-                else
-                    Consume();
+                catch {
+                    ReportError(stmtLoc, "expected statement");
+                    continue;
+                }
             }
-            catch(CompilerError e) {
-                var err = BestError(e, new CompilerError(stmtLoc, "expected statement"));
-                Console.WriteLine(err.Message);
-                continue;
-            }
-        }
 
-            throw new CompilerError(stmtLoc, "expected statement");
+            ReportError(stmtLoc, "expected statement");
+            return null;
         }
 
         ASTFunctionCall ParseFunctionCall() 
@@ -149,7 +160,8 @@ namespace Language.C.Parsing
             if(nextToken.Is(TokenType.Identifier))
                 return ParseFunctionCall();
 
-            throw new CompilerError(currToken.end, "expected expression");
+            ReportError(currToken.end, "expected expression");
+            return null;
         }
     }
 }

@@ -1,17 +1,21 @@
 using System;
 using System.Collections.Generic;
 using Compiler.Lexing;
+using Compiler.Source;
 
 namespace Compiler.Parsing
 {
     public abstract class Parser
     {
+        private SourceFile file;
         private Lexer lexer;
         protected Token currToken;
         protected Token nextToken;
+        private bool isError;
 
-        public Parser(Lexer lexer)
+        public Parser(SourceFile file, Lexer lexer)
         {
+            this.file = file;
             this.lexer = lexer;
 
             // Make nextToken point to first token, and currToken to the "0-th" token
@@ -31,8 +35,12 @@ namespace Compiler.Parsing
         protected Token Consume(Enum type = null, String value = null)
         {
             // Assert type and value
-            if(!nextToken.Is(type, value))
-                throw new CompilerError(currToken.end, String.Format("expected '{0}'", value==null?(object)type:value));
+            if(!nextToken.Is(type, value)) 
+            {
+                ReportError(currToken.end, String.Format("expected '{0}'", value==null?(object)type:value));
+                throw new Exception();
+            }
+            isError = false;
 
             // Advance tokens
             currToken = nextToken;
@@ -40,10 +48,21 @@ namespace Compiler.Parsing
             return currToken;
         }
 
-        protected CompilerError BestError(CompilerError inner, CompilerError outer) 
+        protected void ReportError(SourcePos pos, string message) 
         {
-            if(outer.location.After(inner.location)) return outer;
-            return inner;
+            if(!isError)
+                file.ReportError(new SourceError(pos, message));
+            isError = true;
+        }
+
+        protected void ConsumeAndReportError(SourcePos pos, string message)
+        {
+            if(isError) 
+            {
+                Consume();
+                isError = true;            
+            }
+            ReportError(pos, message);
         }
     }
 }
