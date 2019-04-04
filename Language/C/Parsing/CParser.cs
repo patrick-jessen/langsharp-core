@@ -15,10 +15,10 @@ namespace Language.C.Parsing
         {
             var ast = new ASTFile();
 
-            while(nextToken.Is(TokenType.Hash))
+            while(nextToken.Is(CTokens.Hash))
                 ast.includes.Add(ParseInclude());
 
-            while(!nextToken.Is(Token.Type.EOF))
+            while(!nextToken.Is(Token.EOF))
                 ast.declarations.Add(ParseDeclaration());
 
             return ast;
@@ -28,9 +28,9 @@ namespace Language.C.Parsing
         {
             try 
             {
-                Consume(TokenType.Hash);
-                Consume(TokenType.Keyword, "include");
-                var fileTok = Consume(TokenType.String);
+                Consume(CTokens.Hash);
+                Consume(CTokens.Keyword, "include");
+                var fileTok = Consume(CTokens.String);
                 return new ASTInclude() { file = fileTok };
             }
             catch 
@@ -42,9 +42,9 @@ namespace Language.C.Parsing
 
         private ASTDeclaration ParseDeclaration()
         {
-            if(nextToken.Is(TokenType.Keyword, "extern"))
+            if(nextToken.Is(CTokens.Keyword, "extern"))
                 return ParseExtern();
-            if(nextToken.Is(TokenType.Keyword))
+            if(nextToken.Is(CTokens.Keyword))
                 return ParseFunction();
 
             ConsumeAndReportError(nextToken.start, "expected declaration");
@@ -55,18 +55,18 @@ namespace Language.C.Parsing
         {
             var ast = new ASTExtern();
 
-            Consume(TokenType.Keyword, "extern");
+            Consume(CTokens.Keyword, "extern");
             ast.declaration = ParseFunctionSignature();
-            Consume(TokenType.Semicolon);
+            Consume(CTokens.Semicolon);
             return ast;
         }
 
         private ASTFunction ParseFunctionSignature()
         {
-            var retTok = Consume(TokenType.Keyword);
-            var nameTok = Consume(TokenType.Identifier);
-            Consume(TokenType.ParentStart);
-            Consume(TokenType.ParentEnd);
+            var retTok = Consume(CTokens.Keyword);
+            var nameTok = Consume(CTokens.Identifier);
+            Consume(CTokens.ParentStart);
+            Consume(CTokens.ParentEnd);
 
             return new ASTFunction() 
             {
@@ -81,13 +81,13 @@ namespace Language.C.Parsing
             var bodyLoc = nextToken.end;
 
             try {
-                Consume(TokenType.BraceStart);
-                while(!nextToken.Is(TokenType.BraceEnd) && !nextToken.Is(Token.Type.EOF))
+                Consume(CTokens.BraceStart);
+                while(!nextToken.Is(CTokens.BraceEnd) && !nextToken.Is(Token.EOF))
                 {
                     ast.statements.Add(ParseStatement());
-                    Consume(TokenType.Semicolon);
+                    Consume(CTokens.Semicolon);
                 }
-                Consume(TokenType.BraceEnd);
+                Consume(CTokens.BraceEnd);
             }
             catch {
                 ReportError(currToken.end, "expected function body");
@@ -101,9 +101,9 @@ namespace Language.C.Parsing
         {
             var stmtLoc = nextToken.start;
 
-            while(!nextToken.Is(Token.Type.EOF)) {
+            while(!nextToken.Is(Token.EOF)) {
                 try {
-                    if(nextToken.Is(TokenType.Keyword, "return"))
+                    if(nextToken.Is(CTokens.Keyword, "return"))
                     {
                         Consume();
                         return new ASTReturn()
@@ -111,7 +111,7 @@ namespace Language.C.Parsing
                             value = ParseExpression()
                         };
                     }
-                    else if(nextToken.Is(TokenType.Identifier))
+                    else if(nextToken.Is(CTokens.Identifier))
                         return ParseFunctionCall();
                     else
                         Consume();
@@ -128,36 +128,40 @@ namespace Language.C.Parsing
 
         ASTFunctionCall ParseFunctionCall() 
         {
-            var identTok = Consume(TokenType.Identifier);
-            Consume(TokenType.ParentStart);
+            var identTok = Consume(CTokens.Identifier);
+            Consume(CTokens.ParentStart);
 
             var ast = new ASTFunctionCall() 
             {
                 identifier = identTok
             };
 
-            while(!nextToken.Is(TokenType.ParentEnd)) 
+            if(!nextToken.Is(CTokens.ParentEnd))
             {
-                ast.arguments.Add(ParseExpression());
-                if(!nextToken.Is(TokenType.ParentEnd))
-                    Consume(TokenType.Comma);
+                while(true)
+                {
+                    ast.arguments.Add(ParseExpression());
+                    if(nextToken.Is(CTokens.Comma))
+                        Consume(CTokens.Comma);
+                    else break;
+                }
             }
 
-            Consume(TokenType.ParentEnd);
+            Consume(CTokens.ParentEnd);
             return ast;
         }
 
         ASTExpression ParseExpression()
         {
-            if(nextToken.Is(TokenType.Integer)) {
+            if(nextToken.Is(CTokens.Integer)) {
                 Consume();
                 return new ASTInteger() { value = currToken };
             }
-            if(nextToken.Is(TokenType.String)) {
+            if(nextToken.Is(CTokens.String)) {
                 Consume();
                 return new ASTString() { value = currToken };
             }
-            if(nextToken.Is(TokenType.Identifier))
+            if(nextToken.Is(CTokens.Identifier))
                 return ParseFunctionCall();
 
             ReportError(currToken.end, "expected expression");

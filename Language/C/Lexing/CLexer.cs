@@ -8,7 +8,7 @@ namespace Language.C.Lexing
     {
         public CLexer(SourceFile file) : base(file) {}
 
-        protected override Enum LexOne()
+        protected override TokenType LexOne()
         {
             // Ignore whitespace
             if (Char.IsWhiteSpace(currChar))
@@ -23,8 +23,8 @@ namespace Language.C.Lexing
             if (Char.IsLetter(currChar))
             {
                 while (Char.IsLetter(nextChar)) Consume();
-                if (IsKeyword()) return TokenType.Keyword;
-                return TokenType.Identifier;
+                if (IsKeyword()) return CTokens.Keyword;
+                return CTokens.Identifier;
             }
             // Lex integers and floats
             if(Char.IsDigit(currChar)) 
@@ -33,17 +33,20 @@ namespace Language.C.Lexing
                 if(nextChar == '.') {
                     Consume();
                     while(Char.IsDigit(nextChar)) Consume();
-                    return TokenType.Float;
+                    return CTokens.Float;
                 }
-                return TokenType.Integer;
+                return CTokens.Integer;
             }
             // Lex strings
             if(currChar == '"') 
             {
                 while(!EOF && nextChar != '"') Consume();
-                Consume('"');
+                if(nextChar != '"') 
+                    ReportError("expected '\"'");
+                else 
+                    Consume();
                 tokenValue = tokenValue.Substring(1, tokenValue.Length-2);
-                return TokenType.String;
+                return CTokens.String;
             }
             // Lex comments
             if(currChar == '/')
@@ -67,13 +70,13 @@ namespace Language.C.Lexing
             // Lex symbols
             switch(currChar)
             {
-                case '{': return TokenType.BraceStart;
-                case '}': return TokenType.BraceEnd;
-                case '(': return TokenType.ParentStart;
-                case ')': return TokenType.ParentEnd;
-                case '#': return TokenType.Hash;
-                case ';': return TokenType.Semicolon;     
-                case ',': return TokenType.Comma;              
+                case '{': return CTokens.BraceStart;
+                case '}': return CTokens.BraceEnd;
+                case '(': return CTokens.ParentStart;
+                case ')': return CTokens.ParentEnd;
+                case '#': return CTokens.Hash;
+                case ';': return CTokens.Semicolon;     
+                case ',': return CTokens.Comma;              
             }
             
             return null;

@@ -28,16 +28,20 @@ namespace Compiler.Parsing
         public ASTNode Parse() 
         {
             ASTNode ast = ParseOne();
-            Consume(Token.Type.EOF); // Make sure we are at EOF
+            Consume(Token.EOF); // Make sure we are at EOF
             return ast;
         }
 
-        protected Token Consume(Enum type = null, String value = null)
+        protected Token Consume(TokenType type = null, String value = null)
         {
             // Assert type and value
             if(!nextToken.Is(type, value)) 
             {
-                ReportError(currToken.end, String.Format("expected '{0}'", value==null?(object)type:value));
+                var expect = type.ToString();
+                if(value != null)
+                    expect = $"\"{value}\"";
+
+                ReportError(currToken.end, String.Format("expected {0}", expect));
                 throw new Exception();
             }
             isError = false;

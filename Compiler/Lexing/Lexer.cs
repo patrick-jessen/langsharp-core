@@ -6,21 +6,23 @@ namespace Compiler.Lexing
 {
     public abstract class Lexer
     {
-        private SourceFile file;    // The file being lexed
-        private string source;      // Contents of the file
-        private int index;          // Current index into source
-        private int lineNo = 1;     // Current line number
-        private int lineStartIndex; // The index at which the current line starts
-        private SourcePos tokenStart;// The start position of the token currently being evaluated
-
-        private bool isError;       // Whether we are currently lexing an invalid token
-        private string errorValue;  // Value of the error
-        private SourcePos errorStart;// The start position of the error
-
-        protected string tokenValue;// Value of the token currently being evaluated
-        protected bool skipToken;   // Whether to skip the current token
-        protected char currChar;    // The current character
-        protected char nextChar;    // The next character
+        // Source code
+        private SourceFile file;        // The file being lexed
+        private string source;          // Contents of the file
+        // Position tracking
+        private int index;              // Current index into source
+        private int lineNo;             // Current line number
+        private int lineStartIndex;     // The index at which the current line starts
+        // Error handling
+        private bool isError;           // Whether we are currently lexing an invalid token
+        private string errorValue;      // Value of the error
+        private SourcePos errorStart;   // The start position of the error
+        // Token handling
+        private SourcePos tokenStart;   // The start position of the token currently being evaluated
+        protected string tokenValue;    // Value of the token currently being evaluated
+        protected bool skipToken;       // Whether to skip the current token
+        protected char currChar;        // The current character
+        protected char nextChar;        // The next character
 
         public Lexer(SourceFile file)
         {
@@ -34,7 +36,7 @@ namespace Compiler.Lexing
                 nextChar = source[0];
         }
 
-        protected abstract Enum LexOne();
+        protected abstract TokenType LexOne();
         
         public bool EOF => (index >= source.Length);
 
@@ -47,25 +49,27 @@ namespace Compiler.Lexing
                 skipToken = false;
 
                 // Handle EOF
-                if (EOF) return MakeToken(Token.Type.EOF);
+                if (EOF) return MakeToken(Token.EOF);
 
                 // Advance to next character
                 Consume();
 
                 // Lex a single token
                 var type = LexOne();
-                if(type != null) return MakeToken(type);
-
+                if(type != null) 
+                    return MakeToken(type);
                 if(skipToken)
                     continue;
 
-                if(!isError) errorStart = tokenStart;
+                // Handle error
+                if(!isError) 
+                    errorStart = tokenStart;
                 isError = true;
                 errorValue += tokenValue;
             }
         }
 
-        protected char Consume(char val = (char)0)
+        protected char Consume()
         {
             index++;
 
@@ -85,20 +89,19 @@ namespace Compiler.Lexing
             if(currChar != 0)
                 tokenValue += currChar;
 
-            if(val != (char)0 && val != currChar)
-                file.ReportError(new SourceError(GetPosition(), $"expected {val}"));
             return currChar;
         }
 
         private SourcePos GetPosition()
         {
-            return new SourcePos(lineNo, index-lineStartIndex + 1);
+            return new SourcePos(lineNo + 1, index-lineStartIndex + 1);
         }
 
-        private Token MakeToken(Enum type)
+        private Token MakeToken(TokenType type)
         {
             if(isError)
             {
+                // Report the previous error
                 file.ReportError(new SourceError(errorStart, $"unexpected token {errorValue}"));
                 isError = false;
                 errorValue = "";
@@ -106,6 +109,11 @@ namespace Compiler.Lexing
 
             var end = GetPosition();
             return new Token(tokenStart, end, type, tokenValue);
+        }
+
+        protected void ReportError(string message)
+        {
+            file.ReportError(new SourceError(GetPosition(), message));
         }
     }
 }
