@@ -27,9 +27,13 @@ namespace Compiler.Parsing
 
         public ASTNode Parse() 
         {
-            ASTNode ast = ParseOne();
-            Consume(Token.EOF); // Make sure we are at EOF
-            return ast;
+            try 
+            {
+                ASTNode ast = ParseOne();
+                Consume(Token.EOF); // Make sure we are at EOF
+                return ast;
+             } 
+             catch { return null; }
         }
 
         protected Token Consume(TokenType type = null, String value = null)
