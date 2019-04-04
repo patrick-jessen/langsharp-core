@@ -4,12 +4,12 @@ using Compiler.Parsing;
 
 namespace Language.C.Parsing
 {
-    class ASTFile : ASTNode
+    public class ASTFile : ASTNode
     {
         public List<ASTInclude> includes = new List<ASTInclude>();
         public List<ASTDeclaration> declarations = new List<ASTDeclaration>();
     }
-    class ASTInclude : ASTNode 
+    public class ASTInclude : ASTNode 
     { 
         public Token file; 
     }
@@ -17,14 +17,14 @@ namespace Language.C.Parsing
     ////////////////////////////////////////////////////////////////////////////
     // Declarations
     ////////////////////////////////////////////////////////////////////////////
-    interface ASTDeclaration : ASTNode {}
-    class ASTFunction : ASTDeclaration
+    public interface ASTDeclaration : ASTNode {}
+    public class ASTFunction : ASTDeclaration
     {
         public Token name;
         public Token returns;
         public List<ASTStatement> statements = new List<ASTStatement>();
     }
-    class ASTExtern : ASTDeclaration
+    public class ASTExtern : ASTDeclaration
     {
         public ASTDeclaration declaration;
     }
@@ -32,8 +32,8 @@ namespace Language.C.Parsing
     ////////////////////////////////////////////////////////////////////////////
     // Statements
     ////////////////////////////////////////////////////////////////////////////
-    interface ASTStatement : ASTNode {}
-    class ASTReturn : ASTStatement
+    public interface ASTStatement : ASTNode {}
+    public class ASTReturn : ASTStatement
     {
         public ASTExpression value;
     }
@@ -46,12 +46,12 @@ namespace Language.C.Parsing
     ////////////////////////////////////////////////////////////////////////////
     // Expressions
     ////////////////////////////////////////////////////////////////////////////
-    interface ASTExpression : ASTNode {}
-    class ASTInteger : ASTExpression
+    public interface ASTExpression : ASTNode {}
+    public class ASTInteger : ASTExpression
     {
         public Token value;
     }
-    class ASTString : ASTExpression
+    public class ASTString : ASTExpression
     {
         public Token value;
     }

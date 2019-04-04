@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Compiler;
 using Compiler.Lexing;
 using Compiler.Parsing;
@@ -9,7 +10,12 @@ namespace Language.C.Parsing
 {
     public class CParser : Parser 
     {
-        public CParser(SourceFile file) : base(file, new CLexer(file)) {}
+        private CFile file;
+
+        public CParser(CFile file) : base(file.file, new CLexer(file.file)) 
+        {
+            this.file = file;
+        }
 
         protected override ASTNode ParseOne()
         {
@@ -31,6 +37,12 @@ namespace Language.C.Parsing
                 Consume(CTokens.Hash);
                 Consume(CTokens.Keyword, "include");
                 var fileTok = Consume(CTokens.String);
+
+
+                var incl = Path.GetDirectoryName(file.file.path);
+                file.AddInclude(incl + "/" + fileTok.value);
+
+
                 return new ASTInclude() { file = fileTok };
             }
             catch 

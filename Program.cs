@@ -8,7 +8,11 @@ namespace langsharp_core
     {
         static void Main(string[] args)
         {
-            CCompiler.Compile("./prog/prog.c");
+            var prog = new CProgram(new string[]{
+                "./prog/prog.c",
+                "./prog/other.c"
+            });
+            prog.Compile();
         }
     }
 }
